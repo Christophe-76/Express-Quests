@@ -1,15 +1,10 @@
-// ...
+require("dotenv").config();
 
 const express = require("express");
 
-const app = express();
+const app = express(); 
 
-app.use(express.json()); // add this line
-
-// ...
-require("dotenv").config();
-
-
+app.use(express.json());
 
 const port = process.env.APP_PORT ?? 5000;
 
@@ -20,20 +15,18 @@ const welcome = (req, res) => {
 app.get("/", welcome);
 
 const movieHandlers = require("./movieHandlers");
+const userHandlers = require("./userHandlers");
 
 app.get("/api/movies", movieHandlers.getMovies);
 app.get("/api/movies/:id", movieHandlers.getMovieById);
-app.post("/api/movies", movieHandlers.postMovie);
+app.get("/api/users", userHandlers.getUsers);
+app.get("/api/users/:id", userHandlers.getUserById);
+app.post("/api/movies", movieHandlers.postMovie); 
+app.post("/api/users", userHandlers.postUser);
 app.put("/api/movies/:id", movieHandlers.updateMovie);
+app.put("/api/users/:id", userHandlers.updateUser);
 app.delete("/api/movies/:id", movieHandlers.deleteMovie);
-
-const usersHandlers = require("./usersHandlers");
-
-app.get("/api/users", usersHandlers.getUsers);
-app.get("/api/users/:id", usersHandlers.getUsersById);
-app.post("/api/users",usersHandlers.postUser);
-app.put("/api/users/:id", usersHandlers.updateUser);
-app.delete("/api/users/:id", usersHandlers.deleteUser); //express 05
+app.delete("/api/users/:id", userHandlers.deleteUser);
 
 app.listen(port, (err) => {
   if (err) {
