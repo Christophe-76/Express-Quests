@@ -1,5 +1,19 @@
 const database = require("./database");
 
+// LIRE UNE BDD //
+// const getUsers = (req, res) => {
+//   database
+//     .query("select * from users")
+//     .then(([users]) => {
+//       res.json(users);
+//     })
+//     .catch((err) => {
+//       console.error(err);
+//       res.status(500).send("Error retrieving data from database");
+//     });
+// };
+
+// LIRE UNE BDD avec filtres //
 const getUsers = (req, res) => {
   const initialSql = "select * from users";
   const where = [];
@@ -17,8 +31,7 @@ const getUsers = (req, res) => {
       value: req.query.city,
       operator: "=",
     });
-  }
-
+    }
   database
     .query(
       where.reduce(
@@ -37,49 +50,52 @@ const getUsers = (req, res) => {
     });
 };
 
+// LIRE UNE RESSOURCE DE LA BDD (id) //
 const getUserById = (req, res) => {
-  const id = parseInt(req.params.id);
+    const id = parseInt(req.params.id);
+  
+    database
+      // .query(`select * from movies where id = ${id}`)
+      // Injecter une id ds une requête n'est pas sûre (attention aux injections sql)
+      // Il faut utiliser des requêtes préparées comme suit :!!
+      .query('select * from users where id = ?', [id])
+      .then(([users]) => {
+        if (users[0] != null) {
+          res.json(users[0]);
+        } else {
+          res.status(404).send('Not found');
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error retrieving data from database");
+      })
+  };
 
-  database
-    .query("select * from users where id = ?", [id])
-    .then(([users]) => {
-      if (users[0] != null) {
-        res.json(users[0]);
-      } else {
-        res.status(404).send("Not Found");
-      }
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error retrieving data from database");
-    });
-};
-
+// AJOUTER UNE RESSOURCE DS LA BDD //
 const postUser = (req, res) => {
-  const { firstname, lastname, email, city, language } = req.body;
-  database
-    .query(
-      "INSERT INTO users(firstname, lastname, email, city, language) VALUES (?, ?, ?, ?, ?)",
-      [firstname, lastname, email, city, language]
-    )
-    .then(([result]) => {
-      res.location(`/api/users/${result.insertId}`).sendStatus(201);
+    const { firstname, lastname, email, city, language, hashedPassword } = req.body;
 
-      // wait for it
-    })
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send("Error saving the user");
-    });
-};
-
+    database
+      .query("insert into users(firstname, lastname, email, city, language, hashedPassword) values (?, ?, ?, ?, ?, ?)",
+        [firstname, lastname, email, city, language, hashedPassword]
+      )
+      .then(([result]) => {
+        res.location(`/api/users/${result.insertId}`).sendStatus(201);
+      })
+      .catch((err) => {
+        console.error(err);
+        res.status(500).send("Error saving the user");
+      });
+  };
+  
+// MODIFIER UNE RESSOURCE DE LA BDD (id) //
 const updateUser = (req, res) => {
   const id = parseInt(req.params.id);
-  const { firstname, lastname, email, city, language } = req.body;
+  const { firstname, lastname, email, city, language} = req.body;
 
   database
-    .query(
-      "update users set firstname = ?, lastname = ?, email = ?, city = ?, language = ? where id = ?",
+    .query("update users set firstname = ?, lastname = ?, email = ?, city = ?, language = ? where id = ?",
       [firstname, lastname, email, city, language, id]
     )
     .then(([result]) => {
@@ -93,8 +109,9 @@ const updateUser = (req, res) => {
       console.error(err);
       res.status(500).send("Error editing the user");
     });
-};
+  };
 
+// SUPPRIMER UNE RESSOURCE DE LA BDD (id) //
 const deleteUser = (req, res) => {
   const id = parseInt(req.params.id);
 
@@ -113,10 +130,10 @@ const deleteUser = (req, res) => {
     });
 };
 
-module.exports = {
-  getUsers,
-  getUserById,
-  postUser,
-  updateUser,
-  deleteUser,
-};
+  module.exports = {
+    getUsers,
+    getUserById,
+    postUser,
+    updateUser,
+    deleteUser,
+  };

@@ -1,5 +1,3 @@
-const database = require("./database");
-
 // const movies = [
 //   {
 //     id: 1,
@@ -27,18 +25,26 @@ const database = require("./database");
 //   },
 // ];
 
-/*avant les filtres
-const getMovies = (req, res) => {
-    database
-      .query("select * from movies")
-      .then(([movies]) => {
-        res.json(movies);
-      })
-      .catch((err) => {
-        console.error(err);
-        res.status(500).send("Error retrieving data from database");
-      });
-}; */
+// const getMovies = (req, res) => {
+//   res.json(movies);
+// };
+
+const database = require("./database");
+
+// LIRE UNE BDD //
+// const getMovies = (req, res) => {
+//   database
+//     .query("select * from movies")
+//     .then(([movies]) => {
+//       res.json(movies);
+//     })
+//     .catch((err) => {
+//       console.error(err);
+//       res.status(500).send("Error retrieving data from database");
+//     });
+// };
+
+// LIRE UNE BDD avec filtres //
 const getMovies = (req, res) => {
   const initialSql = "select * from movies";
   const where = [];
@@ -76,55 +82,67 @@ const getMovies = (req, res) => {
     });
 };
 
+// LIRE UNE RESSOURCE DE LA BDD (id) //
+// SANS requête paramétrée //
+// const getMovieById = (req, res) => {
+//   const id = parseInt(req.params.id);
 
+//   const movie = movies.find((movie) => movie.id === id);
+
+//   if (movie != null) {
+//     res.json(movie);
+//   } else {
+//     res.status(404).send("Not Found");
+//   }
+// };
+
+// LIRE UNE RESSOURCE DE LA BDD (id) //
+// AVEC requête paramétrée //
 const getMovieById = (req, res) => {
   const id = parseInt(req.params.id);
 
   database
-    .query("select * from movies where id = ?", [id])
+    // .query(`select * from movies where id = ${id}`)
+    // Injecter une id ds une requête n'est pas sûre (attention aux injections sql)
+    // Il faut utiliser des requêtes préparées comme suit :!!
+    .query('select * from movies where id = ?', [id])
     .then(([movies]) => {
       if (movies[0] != null) {
         res.json(movies[0]);
       } else {
-        res.status(404).send("Not Found");
+        res.status(404).send('Not found');
       }
     })
     .catch((err) => {
-      console.error(err); 
+      console.error(err);
       res.status(500).send("Error retrieving data from database");
-    });
-
-  // const movie = movies.find((movie) => movie.id === id); 
-
- 
+    })
 };
 
+// AJOUTER UNE RESSOURCE DS LA BDD //
 const postMovie = (req, res) => {
   const { title, director, year, color, duration } = req.body;
-database
-  .query(
-    "INSERT INTO movies(title, director, year, color, duration) VALUES (?, ?, ?, ?, ?)",
-    [title, director, year, color, duration]
-  )
-  .then(([result]) => {
-    res.location(`/api/movies/${result.insertId}`).sendStatus(201);
-    
-    // wait for it
-  })
-  .catch((err) => {
-    console.error(err);
-    res.status(500).send("Error saving the movie");
-  });
 
+  database
+    .query("insert into movies(title, director, year, color, duration) values (?, ?, ?, ?, ?)",
+      [title, director, year, color, duration]
+    )
+    .then(([result]) => {
+      res.location(`/api/movies/${result.insertId}`).sendStatus(201);
+    })
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send("Error saving the movie");
+    });
 };
 
+// MODIFIER UNE RESSOURCE DE LA BDD (id) //
 const updateMovie = (req, res) => {
   const id = parseInt(req.params.id);
   const { title, director, year, color, duration } = req.body;
 
   database
-    .query(
-      "update movies set title = ?, director = ?, year = ?, color = ?, duration = ? where id = ?",
+    .query("update movies set title = ?, director = ?, year = ?, color = ?, duration = ? where id = ?",
       [title, director, year, color, duration, id]
     )
     .then(([result]) => {
@@ -140,6 +158,7 @@ const updateMovie = (req, res) => {
     });
 };
 
+// SUPPRIMER UNE RESSOURCE DE LA BDD (id) //
 const deleteMovie = (req, res) => {
   const id = parseInt(req.params.id);
 
@@ -158,14 +177,10 @@ const deleteMovie = (req, res) => {
     });
 };
 
-
-
-
 module.exports = {
   getMovies,
   getMovieById,
   postMovie,
   updateMovie,
   deleteMovie,
-   // don't forget to export your function ;)
 };

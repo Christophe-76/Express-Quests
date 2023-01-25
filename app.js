@@ -1,17 +1,21 @@
-require("dotenv").config();
-
 const express = require("express");
+require('dotenv').config();
 
-const app = express(); 
+const app = express();
 
-app.use(express.json());
+app.use(express.json()); 
+// express.json() est un middleware express permettant
+// à ttes les routes de lire du JSON
+
+const { validateMovie } = require("./validateMovie");
+const { validateUser } = require("./validateUser");
+const { hashPassword } = require("./auth");
 
 const port = process.env.APP_PORT ?? 5000;
 
 const welcome = (req, res) => {
-  res.send("Welcome to my favourite movie list");
+  res.send("Welcome");
 };
-
 app.get("/", welcome);
 
 const movieHandlers = require("./movieHandlers");
@@ -19,13 +23,18 @@ const userHandlers = require("./userHandlers");
 
 app.get("/api/movies", movieHandlers.getMovies);
 app.get("/api/movies/:id", movieHandlers.getMovieById);
+app.post("/api/movies", validateMovie, movieHandlers.postMovie);
+app.put("/api/movies/:id", validateMovie, movieHandlers.updateMovie);
+// app.post("/api/movies", movieHandlers.postMovie);
+// app.put("/api/movies/:id", movieHandlers.updateMovie);
+app.delete("/api/movies/:id", movieHandlers.deleteMovie);
+
 app.get("/api/users", userHandlers.getUsers);
 app.get("/api/users/:id", userHandlers.getUserById);
-app.post("/api/movies", movieHandlers.postMovie); 
-app.post("/api/users", userHandlers.postUser);
-app.put("/api/movies/:id", movieHandlers.updateMovie);
-app.put("/api/users/:id", userHandlers.updateUser);
-app.delete("/api/movies/:id", movieHandlers.deleteMovie);
+app.post("/api/users", hashPassword, userHandlers.postUser);
+app.put("/api/users/:id", hashPassword, userHandlers.updateUser);
+// app.post("/api/users", userHandlers.postUser);
+// app.put("/api/users/:id", userHandlers.updateUser);
 app.delete("/api/users/:id", userHandlers.deleteUser);
 
 app.listen(port, (err) => {
@@ -35,4 +44,3 @@ app.listen(port, (err) => {
     console.log(`Server is listening on ${port}`);
   }
 });
-
